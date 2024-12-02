@@ -8,6 +8,7 @@ main = do
   let inputLines = lines contents
   let input = map (map (read :: String -> Int) . words) inputLines
   print (part1 input)
+  print (part2 input)
 
 part1 :: [[Int]] -> Int
 part1 input = length (filter id (zipWith (curry (\x -> uncurry (||) (fst x) && snd x)) (zip allIncreasing allDecreasing) inCorrectRange))
@@ -18,10 +19,13 @@ part1 input = length (filter id (zipWith (curry (\x -> uncurry (||) (fst x) && s
     inCorrectRange = map (all ((\x -> x <= 3 && x >= 1) . abs)) differences
 
 part2 :: [[Int]] -> Int
-part2 input = zip (zip3 numberIncreasing numberDecreasing numberInCorrectRange) lengths
+part2 reports = length (filter isSafe reports)
   where
-    differences = map (\x -> zipWith (-) x (tail x)) input
-    numberIncreasing = map (length . filter (>= 0)) differences
-    numberDecreasing = map (length . filter (<= 0)) differences
-    lengths = map length differences
-    numberInCorrectRange = map (length . filter ((\x -> x <= 3 && x >= 1) . abs)) differences
+    isSafe :: [Int] -> Bool
+    isSafe x = isDirectlySafe || any (((== 1) . part1 . (: []) . (\(lst, r) -> remove r lst)) . (x,)) [0 .. length x - 1]
+      where
+        isDirectlySafe = part1 [x] == 1
+        remove i (x : xs)
+          | null xs = [x | i /= 0]
+          | i == 0 = remove (i - 1) xs
+          | otherwise = x : remove (i - 1) xs
